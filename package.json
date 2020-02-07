@@ -1,6 +1,6 @@
 {
-  "name": "EA-NodeJS-Template",
-  "version": "0.1.0",
+  "name": "amberdata-adapter",
+  "version": "0.0.1",
   "author": "",
   "description": "",
   "license": "MIT",
@@ -9,7 +9,8 @@
   },
   "dependencies": {
     "lodash": "^4.17.15",
-    "request": "^2.88.0"
+    "request": "^2.88.0",
+    "request-promise": "^4.2.5"
   },
   "devDependencies": {
     "body-parser": "^1.19.0",

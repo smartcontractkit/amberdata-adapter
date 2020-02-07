@@ -1,5 +1,40 @@
-const request = require('request')
+const rp = require('request-promise')
 const _ = require('lodash')
+const retries = process.env.RETRIES || 3
+const delay = process.env.RETRY_DELAY || 1000
+
+const requestRetry = (options, retries) => {
+  return new Promise((resolve, reject) => {
+    const retry = (options, n) => {
+      return rp(options)
+        .then(response => {
+          if (_.isEmpty(response.body.payload)) {
+            if (n === 1) {
+              reject(response)
+            } else {
+              setTimeout(() => {
+                retries--
+                retry(options, retries)
+              }, delay)
+            }
+          } else {
+            return resolve(response)
+          }
+        })
+        .catch(error => {
+          if (n === 1) {
+            reject(error)
+          } else {
+            setTimeout(() => {
+              retries--
+              retry(options, retries)
+            }, delay)
+          }
+        })
+    }
+    return retry(options, retries)
+  })
+}
 
 const createRequest = (input, callback) => {
   const coin = input.data.coin || 'eth'
@@ -15,27 +50,28 @@ const createRequest = (input, callback) => {
       'x-api-key': process.env.API_KEY
     },
     qs: queryObj,
-    json: true
+    json: true,
+    resolveWithFullResponse: true
   }
-  request(options, (error, response, body) => {
-    if (error || response.statusCode >= 400 || _.isEmpty(body.payload)) {
+  requestRetry(options, retries)
+    .then(response => {
+      const result = JSON.parse(response.body.payload[`${coin.toLowerCase()}_${market.toLowerCase()}`].price)
+      response.body.payload.result = result
       callback(response.statusCode, {
+        jobRunID: input.id,
+        data: response.body.payload,
+        result,
+        statusCode: response.statusCode
+      })
+    })
+    .catch(error => {
+      callback(error.statusCode, {
         jobRunID: input.id,
         status: 'errored',
-        error: body,
-        statusCode: response.statusCode
+        error,
+        statusCode: error.statusCode
       })
-    } else {
-      const result = JSON.parse(body.payload[`${coin.toLowerCase()}_${market.toLowerCase()}`].price)
-      body.result = result
-      callback(response.statusCode, {
-        jobRunID: input.id,
-        data: body,
-        result: result,
-        statusCode: response.statusCode
-      })
-    }
-  })
+    })
 }
 
 exports.gcpservice = (req, res) => {
