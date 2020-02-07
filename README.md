@@ -50,7 +50,7 @@ docker build . -t amberdata-adapter
 Then run it with:
 
 ```bash
-docker run -it amberdata-adapter:latest
+docker run -it -p 8080:8080 -e API_KEY='YOUR_API_KEY' amberdata-adapter:latest
 ```
 
 
