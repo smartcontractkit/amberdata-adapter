@@ -2,8 +2,8 @@
 
 ## Input Params
 
-- `coin`: The asset to query
-- `market`: The currency to convert to
+- `from` or `coin`: The asset to query
+- `to` or `market`: The currency to convert to
 
 ## Output Format
 
