@@ -2,6 +2,7 @@ const rp = require('request-promise')
 const _ = require('lodash')
 const retries = process.env.RETRIES || 3
 const delay = process.env.RETRY_DELAY || 1000
+const timeout = process.env.TIMEOUT || 1000
 
 const requestRetry = (options, retries) => {
   return new Promise((resolve, reject) => {
@@ -51,6 +52,7 @@ const createRequest = (input, callback) => {
     },
     qs: queryObj,
     json: true,
+    timeout,
     resolveWithFullResponse: true
   }
   requestRetry(options, retries)
