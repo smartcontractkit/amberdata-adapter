@@ -70,7 +70,7 @@ const createRequest = (input, callback) => {
       callback(error.statusCode, {
         jobRunID: input.id,
         status: 'errored',
-        error,
+        error: error.response.body,
         statusCode: error.statusCode
       })
     })
