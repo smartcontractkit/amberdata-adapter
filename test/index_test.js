@@ -29,11 +29,11 @@ describe('createRequest', () => {
       data: {}
     }
 
-    it('returns data to the node', (done) => {
+    it('errors', (done) => {
       createRequest(req, (statusCode, data) => {
-        assert.equal(statusCode, 200)
         assert.equal(data.jobRunID, jobID)
-        assert.isNotEmpty(data.data)
+        assert.equal(data.status, 'errored')
+        assert.isNotEmpty(data.error)
         done()
       })
     })

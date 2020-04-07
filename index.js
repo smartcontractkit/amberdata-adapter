@@ -38,8 +38,8 @@ const requestRetry = (options, retries) => {
 }
 
 const createRequest = (input, callback) => {
-  const coin = input.data.from || input.data.coin || 'eth'
-  const market = input.data.to || input.data.market || 'usd'
+  const coin = input.data.from || input.data.coin || ''
+  const market = input.data.to || input.data.market || ''
   const url = `https://web3api.io/api/v2/market/prices/${coin.toLowerCase()}/latest`
   const queryObj = {
     quote: market.toLowerCase()
@@ -70,7 +70,7 @@ const createRequest = (input, callback) => {
       callback(error.statusCode, {
         jobRunID: input.id,
         status: 'errored',
-        error,
+        error: error.response.body,
         statusCode: error.statusCode
       })
     })
