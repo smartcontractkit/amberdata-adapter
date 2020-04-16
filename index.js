@@ -1,78 +1,39 @@
-const rp = require('request-promise')
-const _ = require('lodash')
-const retries = process.env.RETRIES || 3
-const delay = process.env.RETRY_DELAY || 1000
-const timeout = process.env.TIMEOUT || 1000
+const { Requester, Validator } = require('external-adapter')
 
-const requestRetry = (options, retries) => {
-  return new Promise((resolve, reject) => {
-    const retry = (options, n) => {
-      return rp(options)
-        .then(response => {
-          if (_.isEmpty(response.body.payload)) {
-            if (n === 1) {
-              reject(response)
-            } else {
-              setTimeout(() => {
-                retries--
-                retry(options, retries)
-              }, delay)
-            }
-          } else {
-            return resolve(response)
-          }
-        })
-        .catch(error => {
-          if (n === 1) {
-            reject(error)
-          } else {
-            setTimeout(() => {
-              retries--
-              retry(options, retries)
-            }, delay)
-          }
-        })
-    }
-    return retry(options, retries)
-  })
+const customError = (body) => {
+  if (Object.keys(body.payload).length === 0) return true
+  return false
+}
+
+const customParams = {
+  base: ['base', 'from', 'coin'],
+  quote: ['quote', 'to', 'market']
 }
 
 const createRequest = (input, callback) => {
-  const coin = input.data.from || input.data.coin || ''
-  const market = input.data.to || input.data.market || ''
+  const validator = new Validator(input, customParams, callback)
+  const jobRunID = validator.validated.id
+  const coin = validator.validated.data.base
+  const market = validator.validated.data.quote
   const url = `https://web3api.io/api/v2/market/prices/${coin.toLowerCase()}/latest`
-  const queryObj = {
-    quote: market.toLowerCase()
-  }
 
   const options = {
-    url: url,
+    url,
     headers: {
       'x-api-key': process.env.API_KEY
     },
-    qs: queryObj,
-    json: true,
-    timeout,
-    resolveWithFullResponse: true
+    qs: {
+      quote: market.toLowerCase()
+    }
   }
-  requestRetry(options, retries)
+  Requester.requestRetry(options, customError)
     .then(response => {
-      const result = JSON.parse(response.body.payload[`${coin.toLowerCase()}_${market.toLowerCase()}`].price)
-      response.body.payload.result = result
-      callback(response.statusCode, {
-        jobRunID: input.id,
-        data: response.body.payload,
-        result,
-        statusCode: response.statusCode
-      })
+      response.body.result = Requester.validateResult(response.body,
+        ['payload', `${coin.toLowerCase()}_${market.toLowerCase()}`, 'price'])
+      Requester.successCallback(jobRunID, response.statusCode, response.body, callback)
     })
     .catch(error => {
-      callback(error.statusCode, {
-        jobRunID: input.id,
-        status: 'errored',
-        error: error.response.body,
-        statusCode: error.statusCode
-      })
+      Requester.errorCallback(jobRunID, error, callback)
     })
 }
 

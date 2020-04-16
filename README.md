@@ -2,12 +2,12 @@
 
 ## Input Params
 
-- `from` or `coin`: The asset to query
-- `to` or `market`: The currency to convert to
+- `base`, `from`, or `coin`: The asset to query
+- `quote`, `to`, or `market`: The currency to convert to
 
 ## Output Format
 
-```
+```json
 {
  "jobRunID": "278c97ffadb54a5bbb93cfec5f7b5503",
  "data": {
@@ -30,7 +30,7 @@
 ## Install
 
 ```bash
-yarn install
+yarn
 ```
 
 ## Test
