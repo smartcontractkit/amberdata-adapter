@@ -30,10 +30,10 @@ const createRequest = (input, callback) => {
     .then(response => {
       response.body.result = Requester.validateResult(response.body,
         ['payload', `${coin.toLowerCase()}_${market.toLowerCase()}`, 'price'])
-      Requester.successCallback(jobRunID, response.statusCode, response.body, callback)
+      callback(response.statusCode, Requester.success(jobRunID, response))
     })
     .catch(error => {
-      Requester.errorCallback(jobRunID, error, callback)
+      callback(500, Requester.errored(jobRunID, error))
     })
 }
 
